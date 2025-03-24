@@ -1,17 +1,34 @@
-import { WebSocketServer } from 'ws';
-import * as Y from 'yjs';
 import fs from 'fs';
+import { IncomingMessage } from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { WebSocket, WebSocketServer } from 'ws';
+import * as Y from 'yjs';
 
+// Get directory path in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Create a server-side YJS document handler
+// Type definitions
+interface ClientConnection {
+    docName: string;
+    clientId: string;
+}
+
+interface DocumentData {
+    doc: Y.Doc;
+    clients: Map<string, WebSocket>;
+}
+
 class YjsServerImpl {
+    private docs: Map<string, DocumentData>;
+    private connections: Map<WebSocket, ClientConnection>;
+    private STORAGE_DIR: string;
+    private saveInterval: Timer;
+
     constructor() {
-        this.docs = new Map(); // Map to store documents by name
-        this.connections = new Map(); // Track all connections
+        this.docs = new Map<string, DocumentData>();
+        this.connections = new Map<WebSocket, ClientConnection>();
         this.STORAGE_DIR = path.join(__dirname, 'yjs-docs');
 
         // Create storage directory if it doesn't exist
@@ -24,22 +41,23 @@ class YjsServerImpl {
     }
 
     // Get or create a document
-    getDocument(docName) {
+    private getDocument(docName: string): DocumentData {
         if (!this.docs.has(docName)) {
             const doc = new Y.Doc();
-            this.docs.set(docName, {
+            const docData: DocumentData = {
                 doc,
-                clients: new Map()
-            });
+                clients: new Map<string, WebSocket>()
+            };
+            this.docs.set(docName, docData);
 
             // Try to load document from storage
             this.loadDocument(docName, doc);
         }
-        return this.docs.get(docName);
+        return this.docs.get(docName)!;
     }
 
     // Load document from file
-    loadDocument(docName, doc) {
+    private loadDocument(docName: string, doc: Y.Doc): void {
         const storagePath = path.join(this.STORAGE_DIR, `${docName}.bin`);
         try {
             if (fs.existsSync(storagePath)) {
@@ -53,10 +71,10 @@ class YjsServerImpl {
     }
 
     // Save document to file
-    persistDocument(docName) {
+    private persistDocument(docName: string): void {
         if (!this.docs.has(docName)) return;
 
-        const { doc } = this.docs.get(docName);
+        const { doc } = this.docs.get(docName)!;
         const persistedYDoc = Y.encodeStateAsUpdate(doc);
         const storagePath = path.join(this.STORAGE_DIR, `${docName}.bin`);
 
@@ -67,16 +85,16 @@ class YjsServerImpl {
     }
 
     // Save all documents
-    persistAllDocuments() {
+    public persistAllDocuments(): void {
         for (const docName of this.docs.keys()) {
             this.persistDocument(docName);
         }
     }
 
     // Handle a new WebSocket connection
-    handleConnection(ws, req) {
+    public handleConnection(ws: WebSocket, req: IncomingMessage): void {
         // Extract document name from URL or query params
-        const url = new URL(req.url, `http://${req.headers.host}`);
+        const url = new URL(req.url || '/', `http://${req.headers.host}`);
         const docName = url.searchParams.get('document') || 'default';
         const clientId = Math.random().toString(36).substring(2, 15);
 
@@ -97,16 +115,28 @@ class YjsServerImpl {
         ws.send(initialSync);
 
         // Set up message handler
-        ws.on('message', (message) => {
+        ws.on('message', (message: WebSocket.Data) => {
             try {
                 // Ensure message is Uint8Array
-                let update;
+                let update: Uint8Array;
+
                 if (message instanceof ArrayBuffer) {
                     update = new Uint8Array(message);
-                } else if (message instanceof Buffer) {
+                } else if (Buffer.isBuffer(message)) {
                     update = new Uint8Array(message);
                 } else if (message instanceof Uint8Array) {
                     update = message;
+                } else if (typeof message === 'string') {
+                    // Try to handle string messages (not standard for Yjs, but just in case)
+                    console.warn('Received string message instead of binary');
+                    try {
+                        // Try to parse as base64 or JSON
+                        const buf = Buffer.from(message, 'base64');
+                        update = new Uint8Array(buf);
+                    } catch (e) {
+                        console.error('Could not convert string message to binary update');
+                        return;
+                    }
                 } else {
                     console.error('Unsupported message format:', typeof message);
                     return;
@@ -117,7 +147,7 @@ class YjsServerImpl {
 
                 // Broadcast to all other clients on this document
                 clients.forEach((client, cid) => {
-                    if (cid !== clientId && client.readyState === ws.OPEN) {
+                    if (cid !== clientId && client.readyState === WebSocket.OPEN) {
                         client.send(update);
                     }
                 });
@@ -135,13 +165,14 @@ class YjsServerImpl {
 
             // Clean up
             if (this.docs.has(docName)) {
-                this.docs.get(docName).clients.delete(clientId);
+                const docData = this.docs.get(docName)!;
+                docData.clients.delete(clientId);
 
                 // If no clients left, consider unloading the document from memory
-                if (this.docs.get(docName).clients.size === 0) {
+                if (docData.clients.size === 0) {
                     // Save one last time before unloading
                     this.persistDocument(docName);
-                    // Keep the document in memory for now, but could unload if memory is a concern
+                    // Optional: Unload from memory if memory is a concern
                     // this.docs.delete(docName);
                 }
             }
@@ -151,7 +182,7 @@ class YjsServerImpl {
     }
 
     // Close the server and clean up
-    close() {
+    public close(): void {
         console.log('Shutting down YJS server, persisting all documents...');
         clearInterval(this.saveInterval);
         this.persistAllDocuments();
@@ -171,18 +202,21 @@ class YjsServerImpl {
 export const yjsServer = new YjsServerImpl();
 
 // Main server code
-const PORT = (process.env['PORT'] || 1234);
+const PORT = Number(process.env['PORT'] || 1234);
 const wss = new WebSocketServer({ port: PORT });
 
-wss.on('connection', (ws, req) => {
+wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     // This handler will normalize messages before passing to the Yjs handler
-    ws.on('message', (message) => {
-        const arrayBuffer = message instanceof Uint8Array
-            ? message.buffer
-            : message;
-
-        console.log('Received message type:', typeof arrayBuffer);
-        // No need to do anything here as the Yjs handler will process the message
+    ws.on('message', (message: WebSocket.Data) => {
+        if (message instanceof Uint8Array) {
+            console.log('Received Uint8Array message');
+        } else if (message instanceof ArrayBuffer) {
+            console.log('Received ArrayBuffer message');
+        } else if (Buffer.isBuffer(message)) {
+            console.log('Received Buffer message');
+        } else {
+            console.log('Received message type:', typeof message);
+        }
     });
 
     console.log('Connection established', req.url);
