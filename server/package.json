@@ -1,9 +1,11 @@
 {
     "name": "server",
-    "module": "index.ts",
+    "module": "src/index.ts",
     "type": "module",
     "scripts": {
-        "dev": "bun run index.ts"
+        "dev": "bun --watch run src/index.ts",
+        "build": "bun build src/index.ts --outfile=dist/index.js",
+        "start": "bun run dist/index.js"
     },
     "devDependencies": {
         "@types/bun": "^1.2.5"

@@ -7,7 +7,7 @@ import { WebSocket } from "ws";
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as syncProtocol from 'y-protocols/sync';
 import * as Y from 'yjs';
-import { YjsServer } from "../YjsServer";
+import { YjsServer } from "../src/YjsServer";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

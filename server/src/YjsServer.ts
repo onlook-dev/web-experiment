@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { IncomingMessage } from 'http';
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
@@ -8,6 +7,7 @@ import { WebSocket } from 'ws';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as syncProtocol from 'y-protocols/sync';
 import * as Y from 'yjs';
+import { DocumentPersistence } from './DocumentPersistence';
 import type { ClientConnection, DocumentData } from './types';
 
 // Get directory path in ESM
@@ -18,26 +18,28 @@ const __dirname = path.dirname(__filename);
 const messageSync = 0;
 const messageAwareness = 1;
 
+// Add type declaration to extend Y.Doc
+declare module 'yjs' {
+    interface Doc {
+        awareness?: awarenessProtocol.Awareness;
+    }
+}
+
 export class YjsServer {
     private docs: Map<string, DocumentData>;
     private connections: Map<WebSocket, ClientConnection>;
-    private STORAGE_DIR: string;
+    private persistence: DocumentPersistence;
     private saveInterval: NodeJS.Timer;
     private gcEnabled: boolean;
 
     constructor() {
         this.docs = new Map<string, DocumentData>();
         this.connections = new Map<WebSocket, ClientConnection>();
-        this.STORAGE_DIR = path.join(__dirname, 'yjs-docs');
-        this.gcEnabled = process.env.GC !== 'false' && process.env.GC !== '0';
-
-        // Create storage directory if it doesn't exist
-        if (!fs.existsSync(this.STORAGE_DIR)) {
-            fs.mkdirSync(this.STORAGE_DIR, { recursive: true });
-        }
+        this.persistence = new DocumentPersistence(path.join(__dirname, 'yjs-docs'));
+        this.gcEnabled = process.env['GC'] !== 'false' && process.env['GC'] !== '0';
 
         // Set up periodic saving
-        this.saveInterval = setInterval(() => this.persistAllDocuments(), 30000);
+        this.saveInterval = setInterval(() => this.persistAllDocuments(), 3000);
     }
 
     // Get or create a document
@@ -66,44 +68,14 @@ export class YjsServer {
             });
 
             // Try to load document from storage
-            this.loadDocument(docName, doc);
+            this.persistence.loadDocument(docName, doc);
         }
         return this.docs.get(docName)!;
     }
 
-    // Load document from file
-    private loadDocument(docName: string, doc: Y.Doc): void {
-        const storagePath = path.join(this.STORAGE_DIR, `${docName}.bin`);
-        try {
-            if (fs.existsSync(storagePath)) {
-                const persistedYDoc = fs.readFileSync(storagePath);
-                Y.applyUpdate(doc, persistedYDoc);
-                console.log(`Loaded document '${docName}' from disk`);
-            }
-        } catch (err) {
-            console.error(`Error loading document '${docName}':`, err);
-        }
-    }
-
-    // Save document to file
-    private persistDocument(docName: string): void {
-        if (!this.docs.has(docName)) return;
-
-        const { doc } = this.docs.get(docName)!;
-        const persistedYDoc = Y.encodeStateAsUpdate(doc);
-        const storagePath = path.join(this.STORAGE_DIR, `${docName}.bin`);
-
-        fs.writeFile(storagePath, persistedYDoc, err => {
-            if (err) console.error(`Error saving document '${docName}':`, err);
-            else console.log(`Document '${docName}' saved to disk`);
-        });
-    }
-
     // Save all documents
     public persistAllDocuments(): void {
-        for (const docName of this.docs.keys()) {
-            this.persistDocument(docName);
-        }
+        this.persistence.persistDocuments(this.docs);
     }
 
     // Add awareness handling
@@ -229,11 +201,11 @@ export class YjsServer {
             const docData = this.docs.get(docName)!;
             const awareness = this.getAwareness(docData.doc);
 
-            awarenessProtocol.removeAwarenessStates(awareness, [clientId], null);
+            awarenessProtocol.removeAwarenessStates(awareness, [Number(clientId)], null);
             docData.clients.delete(clientId);
 
             if (docData.clients.size === 0) {
-                this.persistDocument(docName);
+                this.persistence.persistDocument(docName, docData.doc);
                 // Optional: Unload from memory
                 // this.docs.delete(docName);
             }
