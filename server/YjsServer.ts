@@ -1,14 +1,22 @@
 import fs from 'fs';
 import { IncomingMessage } from 'http';
+import * as decoding from 'lib0/decoding';
+import * as encoding from 'lib0/encoding';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { WebSocket } from 'ws';
+import * as awarenessProtocol from 'y-protocols/awareness';
+import * as syncProtocol from 'y-protocols/sync';
 import * as Y from 'yjs';
 import type { ClientConnection, DocumentData } from './types';
 
 // Get directory path in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Message types (matching y-websocket implementation)
+const messageSync = 0;
+const messageAwareness = 1;
 
 export class YjsServer {
     private docs: Map<string, DocumentData>;
@@ -81,6 +89,14 @@ export class YjsServer {
         }
     }
 
+    // Add awareness handling
+    private getAwareness(doc: Y.Doc): awarenessProtocol.Awareness {
+        if (!doc.awareness) {
+            doc.awareness = new awarenessProtocol.Awareness(doc);
+        }
+        return doc.awareness;
+    }
+
     // Handle a new WebSocket connection
     public handleConnection(ws: WebSocket, req: IncomingMessage): void {
         // Extract document name from URL or query params
@@ -98,52 +114,54 @@ export class YjsServer {
 
         // Get or create the document
         const { doc, clients } = this.getDocument(docName);
+        const awareness = this.getAwareness(doc);
         clients.set(clientId, ws);
-
-        // Send initial document state
-        const initialSync = Y.encodeStateAsUpdate(doc);
-        ws.send(initialSync);
 
         // Set up message handler
         ws.on('message', (message: WebSocket.Data) => {
             try {
-                // Ensure message is Uint8Array
                 let update: Uint8Array;
-
                 if (message instanceof ArrayBuffer) {
                     update = new Uint8Array(message);
                 } else if (Buffer.isBuffer(message)) {
                     update = new Uint8Array(message);
                 } else if (message instanceof Uint8Array) {
                     update = message;
-                } else if (typeof message === 'string') {
-                    // Try to handle string messages (not standard for Yjs, but just in case)
-                    console.warn('Received string message instead of binary');
-                    try {
-                        // Try to parse as base64 or JSON
-                        const buf = Buffer.from(message, 'base64');
-                        update = new Uint8Array(buf);
-                    } catch (e) {
-                        console.error('Could not convert string message to binary update');
-                        return;
-                    }
                 } else {
                     console.error('Unsupported message format:', typeof message);
                     return;
                 }
 
-                // Apply update to document
-                Y.applyUpdate(doc, update);
+                const decoder = decoding.createDecoder(update);
+                const encoder = encoding.createEncoder();
+                const messageType = decoding.readVarUint(decoder);
 
-                // Broadcast to all other clients on this document
-                clients.forEach((client, cid) => {
-                    if (cid !== clientId && client.readyState === WebSocket.OPEN) {
-                        client.send(update);
-                    }
-                });
+                switch (messageType) {
+                    case messageSync: // Document sync
+                        encoding.writeVarUint(encoder, messageSync);
+                        syncProtocol.readSyncMessage(decoder, encoder, doc, ws);
 
-                // Save after each update
-                this.persistDocument(docName);
+                        // Only send reply if there's more than just the message type
+                        if (encoding.length(encoder) > 1) {
+                            ws.send(encoding.toUint8Array(encoder));
+                        }
+                        break;
+
+                    case messageAwareness: // Awareness update
+                        const awarenessUpdate = decoding.readVarUint8Array(decoder);
+                        awarenessProtocol.applyAwarenessUpdate(awareness, awarenessUpdate, ws);
+
+                        // Broadcast awareness update to all other clients
+                        clients.forEach((client, cid) => {
+                            if (cid !== clientId && client.readyState === WebSocket.OPEN) {
+                                client.send(update);
+                            }
+                        });
+                        break;
+
+                    default:
+                        console.warn('Unknown message type:', messageType);
+                }
             } catch (err) {
                 console.error('Error processing message:', err);
             }
@@ -152,6 +170,13 @@ export class YjsServer {
         // Handle disconnection
         ws.on('close', () => {
             console.log(`Client ${clientId} disconnected from '${docName}'`);
+
+            // Clean up awareness states
+            awarenessProtocol.removeAwarenessStates(
+                awareness,
+                [clientId],
+                null
+            );
 
             // Clean up
             if (this.docs.has(docName)) {
@@ -169,6 +194,24 @@ export class YjsServer {
 
             this.connections.delete(ws);
         });
+
+        // Send initial sync step 1
+        const encoder = encoding.createEncoder();
+        encoding.writeVarUint(encoder, messageSync);
+        syncProtocol.writeSyncStep1(encoder, doc);
+        ws.send(encoding.toUint8Array(encoder));
+
+        // Send initial awareness states if any exist
+        const awarenessStates = awareness.getStates();
+        if (awarenessStates.size > 0) {
+            const encoder = encoding.createEncoder();
+            encoding.writeVarUint(encoder, messageAwareness);
+            encoding.writeVarUint8Array(
+                encoder,
+                awarenessProtocol.encodeAwarenessUpdate(awareness, Array.from(awarenessStates.keys()))
+            );
+            ws.send(encoding.toUint8Array(encoder));
+        }
     }
 
     // Close the server and clean up

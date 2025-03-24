@@ -4,6 +4,8 @@
     "": {
       "name": "server",
       "dependencies": {
+        "lib0": "^0.2.100",
+        "y-protocols": "^1.0.6",
         "y-websocket": "^2.1.0",
         "yjs-server": "^0.2.3",
       },

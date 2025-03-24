@@ -17,7 +17,7 @@ export function Editor() {
         const websocketProvider = new WebsocketProvider(
             'ws://localhost:1234',
             'test',
-            doc
+            doc,
         );
         const yText = doc.getText('codemirror');
 
