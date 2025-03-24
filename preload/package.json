@@ -1,0 +1,16 @@
+{
+    "name": "preload",
+    "module": "src/index.ts",
+    "type": "module",
+    "scripts": {
+        "dev": "tsup --watch",
+        "build": "tsup"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "tsup": "^8.4.0"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    }
+}
