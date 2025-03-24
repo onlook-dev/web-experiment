@@ -5,7 +5,7 @@ export const runContentServer = () => {
     // Create a proxy server instance
     const proxy = httpProxy.createProxyServer({
         target: 'http://localhost:3000',
-        changeOrigin: true
+        changeOrigin: true,
     });
 
     // Create HTTP server that uses the proxy
