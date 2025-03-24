@@ -104,11 +104,11 @@ export const Frame = forwardRef<IFrameView>((props, ref) => {
     return (
         <iframe
             ref={iframeRef}
-            src="http://localhost:3000"
+            src="http://localhost:1235"
             sandbox="allow-modals allow-forms allow-same-origin allow-scripts allow-popups allow-downloads allow-presentation"
             allow="geolocation; microphone; camera; midi; encrypted-media"
             className="w-full h-full"
-            onLoad={handleIframeLoad}
+            // onLoad={handleIframeLoad}
             {...props}
         />
     );

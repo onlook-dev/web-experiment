@@ -1,24 +1,29 @@
-import { serve } from "bun";
+import { createServer } from 'http';
+import httpProxy from 'http-proxy';
 
-const server = serve({
-    port: 1235,
-    async fetch(req) {
-        const url = new URL(req.url);
-        const targetUrl = "http://localhost:8080" + url.pathname + url.search;
+export const runContentServer = () => {
+    // Create a proxy server instance
+    const proxy = httpProxy.createProxyServer({
+        target: 'http://localhost:3000',
+        changeOrigin: true
+    });
 
-        const response = await fetch(targetUrl);
-        const html = await response.text();
+    // Create HTTP server that uses the proxy
+    const server = createServer((req, res) => {
+        proxy.web(req, res);
+    });
 
-        // Inject script
-        const injectedHtml = html.replace(
-            "</body>",
-            "<script>console.log('injected');</script></body>"
-        );
-
-        return new Response(injectedHtml, {
-            headers: { "Content-Type": "text/html" },
+    // Error handling
+    proxy.on('error', (err: any, req: any, res: any) => {
+        console.error('Proxy error:', err);
+        res.writeHead(500, {
+            'Content-Type': 'text/plain'
         });
-    },
-});
+        res.end('Proxy error');
+    });
 
-console.log(`Proxy server running at ${server.url}`);
+    // Start the server
+    server.listen(1235, () => {
+        console.log(`Proxy server running on port 1235...`);
+    });
+};
