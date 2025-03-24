@@ -23,11 +23,13 @@ export class YjsServer {
     private connections: Map<WebSocket, ClientConnection>;
     private STORAGE_DIR: string;
     private saveInterval: NodeJS.Timer;
+    private gcEnabled: boolean;
 
     constructor() {
         this.docs = new Map<string, DocumentData>();
         this.connections = new Map<WebSocket, ClientConnection>();
         this.STORAGE_DIR = path.join(__dirname, 'yjs-docs');
+        this.gcEnabled = process.env.GC !== 'false' && process.env.GC !== '0';
 
         // Create storage directory if it doesn't exist
         if (!fs.existsSync(this.STORAGE_DIR)) {
@@ -41,12 +43,27 @@ export class YjsServer {
     // Get or create a document
     private getDocument(docName: string): DocumentData {
         if (!this.docs.has(docName)) {
-            const doc = new Y.Doc();
+            const doc = new Y.Doc({ gc: this.gcEnabled });
             const docData: DocumentData = {
                 doc,
                 clients: new Map<string, WebSocket>()
             };
             this.docs.set(docName, docData);
+
+            // Set up update handler
+            doc.on('update', (update: Uint8Array, origin: any) => {
+                const encoder = encoding.createEncoder();
+                encoding.writeVarUint(encoder, messageSync);
+                syncProtocol.writeUpdate(encoder, update);
+                const message = encoding.toUint8Array(encoder);
+
+                // Broadcast to all connected clients
+                docData.clients.forEach((ws) => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.send(message);
+                    }
+                });
+            });
 
             // Try to load document from storage
             this.loadDocument(docName, doc);
@@ -99,7 +116,8 @@ export class YjsServer {
 
     // Handle a new WebSocket connection
     public handleConnection(ws: WebSocket, req: IncomingMessage): void {
-        // Extract document name from URL or query params
+        ws.binaryType = 'arraybuffer';
+
         const url = new URL(req.url || '/', `http://${req.headers.host}`);
         const docName = url.searchParams.get('document') || 'default';
         const clientId = Math.random().toString(36).substring(2, 15);
@@ -107,27 +125,42 @@ export class YjsServer {
         console.log(`Client ${clientId} connected to document '${docName}'`);
 
         // Store connection info
-        this.connections.set(ws, {
-            docName,
-            clientId
-        });
+        this.connections.set(ws, { docName, clientId });
 
         // Get or create the document
         const { doc, clients } = this.getDocument(docName);
         const awareness = this.getAwareness(doc);
         clients.set(clientId, ws);
 
+        // Set up ping/pong
+        let pongReceived = true;
+        const pingInterval = setInterval(() => {
+            if (!pongReceived) {
+                this.closeConnection(ws);
+                clearInterval(pingInterval);
+            } else if (clients.has(clientId)) {
+                pongReceived = false;
+                try {
+                    ws.ping();
+                } catch (e) {
+                    this.closeConnection(ws);
+                    clearInterval(pingInterval);
+                }
+            }
+        }, 30000);
+
+        ws.on('pong', () => {
+            pongReceived = true;
+        });
+
         // Set up message handler
         ws.on('message', (message: WebSocket.Data) => {
             try {
-                let update: Uint8Array;
-                if (message instanceof ArrayBuffer) {
-                    update = new Uint8Array(message);
-                } else if (Buffer.isBuffer(message)) {
-                    update = new Uint8Array(message);
-                } else if (message instanceof Uint8Array) {
-                    update = message;
-                } else {
+                const update = message instanceof ArrayBuffer ? new Uint8Array(message) :
+                    Buffer.isBuffer(message) ? new Uint8Array(message) :
+                        message instanceof Uint8Array ? message : null;
+
+                if (!update) {
                     console.error('Unsupported message format:', typeof message);
                     return;
                 }
@@ -137,30 +170,23 @@ export class YjsServer {
                 const messageType = decoding.readVarUint(decoder);
 
                 switch (messageType) {
-                    case messageSync: // Document sync
+                    case messageSync:
                         encoding.writeVarUint(encoder, messageSync);
                         syncProtocol.readSyncMessage(decoder, encoder, doc, ws);
-
-                        // Only send reply if there's more than just the message type
                         if (encoding.length(encoder) > 1) {
                             ws.send(encoding.toUint8Array(encoder));
                         }
                         break;
 
-                    case messageAwareness: // Awareness update
+                    case messageAwareness:
                         const awarenessUpdate = decoding.readVarUint8Array(decoder);
                         awarenessProtocol.applyAwarenessUpdate(awareness, awarenessUpdate, ws);
-
-                        // Broadcast awareness update to all other clients
                         clients.forEach((client, cid) => {
                             if (cid !== clientId && client.readyState === WebSocket.OPEN) {
                                 client.send(update);
                             }
                         });
                         break;
-
-                    default:
-                        console.warn('Unknown message type:', messageType);
                 }
             } catch (err) {
                 console.error('Error processing message:', err);
@@ -169,30 +195,8 @@ export class YjsServer {
 
         // Handle disconnection
         ws.on('close', () => {
-            console.log(`Client ${clientId} disconnected from '${docName}'`);
-
-            // Clean up awareness states
-            awarenessProtocol.removeAwarenessStates(
-                awareness,
-                [clientId],
-                null
-            );
-
-            // Clean up
-            if (this.docs.has(docName)) {
-                const docData = this.docs.get(docName)!;
-                docData.clients.delete(clientId);
-
-                // If no clients left, consider unloading the document from memory
-                if (docData.clients.size === 0) {
-                    // Save one last time before unloading
-                    this.persistDocument(docName);
-                    // Optional: Unload from memory if memory is a concern
-                    // this.docs.delete(docName);
-                }
-            }
-
-            this.connections.delete(ws);
+            this.closeConnection(ws);
+            clearInterval(pingInterval);
         });
 
         // Send initial sync step 1
@@ -201,7 +205,7 @@ export class YjsServer {
         syncProtocol.writeSyncStep1(encoder, doc);
         ws.send(encoding.toUint8Array(encoder));
 
-        // Send initial awareness states if any exist
+        // Send initial awareness states
         const awarenessStates = awareness.getStates();
         if (awarenessStates.size > 0) {
             const encoder = encoding.createEncoder();
@@ -212,6 +216,31 @@ export class YjsServer {
             );
             ws.send(encoding.toUint8Array(encoder));
         }
+    }
+
+    private closeConnection(ws: WebSocket): void {
+        const conn = this.connections.get(ws);
+        if (!conn) return;
+
+        const { docName, clientId } = conn;
+        console.log(`Client ${clientId} disconnected from '${docName}'`);
+
+        if (this.docs.has(docName)) {
+            const docData = this.docs.get(docName)!;
+            const awareness = this.getAwareness(docData.doc);
+
+            awarenessProtocol.removeAwarenessStates(awareness, [clientId], null);
+            docData.clients.delete(clientId);
+
+            if (docData.clients.size === 0) {
+                this.persistDocument(docName);
+                // Optional: Unload from memory
+                // this.docs.delete(docName);
+            }
+        }
+
+        this.connections.delete(ws);
+        ws.close();
     }
 
     // Close the server and clean up
