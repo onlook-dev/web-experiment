@@ -7,7 +7,7 @@ import { WebSocket } from 'ws';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as syncProtocol from 'y-protocols/sync';
 import * as Y from 'yjs';
-import { DocumentPersistence } from './DocumentPersistence';
+import { DocumentPersistence } from './persistence';
 import type { ClientConnection, DocumentData } from './types';
 
 const SAVE_DIR = 'data';
@@ -95,8 +95,6 @@ export class YjsServer {
         const url = new URL(req.url || '/', `http://${req.headers.host}`);
         const docName = url.searchParams.get('document') || 'default';
         const clientId = Math.random().toString(36).substring(2, 15);
-
-        console.log(`Client ${clientId} connected to document '${docName}'`);
 
         // Store connection info
         this.connections.set(ws, { docName, clientId });
@@ -197,7 +195,6 @@ export class YjsServer {
         if (!conn) return;
 
         const { docName, clientId } = conn;
-        console.log(`Client ${clientId} disconnected from '${docName}'`);
 
         if (this.docs.has(docName)) {
             const docData = this.docs.get(docName)!;

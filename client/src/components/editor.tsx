@@ -10,6 +10,7 @@ import * as Y from 'yjs';
 export function Editor() {
     const [provider, setProvider] = useState<WebsocketProvider | null>(null);
     const [yDoc, setYDoc] = useState<Y.Doc | null>(null);
+    let text: Y.Text;
 
     useEffect(() => {
         // // Create doc that will sync with server's doc
@@ -19,25 +20,9 @@ export function Editor() {
             'test',
             doc,
         );
-        const yText = doc.getText('codemirror');
-
-        // // Log connection status
-        websocketProvider.on('status', event => {
-            console.log('Connection status:', event.status);
-        });
-
-        // // Log when sync is complete
-        websocketProvider.on('sync', (isSynced: boolean) => {
-            console.log('Synced with server:', isSynced);
-        });
 
         setYDoc(doc);
         setProvider(websocketProvider);
-
-        yText.observe(event => {
-            console.log('Document changed:', event.changes.delta);
-            console.log('Current content:', yText.toString());
-        });
 
         return () => {
             websocketProvider.destroy();
@@ -49,13 +34,17 @@ export function Editor() {
         return <div>Loading...</div>;
     }
 
-    return <CodeMirror
-        height="100vh"
-        width="100vw"
-        theme="dark"
-        extensions={[
-            javascript({ jsx: true, typescript: true }),
-            yCollab(yDoc.getText('codemirror'), provider.awareness)
-        ]}
-    />;
+    text = yDoc.getText('codemirror');
+
+    return (
+        <CodeMirror
+            height="100%"
+            width="100%"
+            theme="dark"
+            extensions={[
+                javascript({ jsx: true, typescript: true }),
+                yCollab(text, provider.awareness)
+            ]}
+        />
+    );
 }

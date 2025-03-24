@@ -7,7 +7,7 @@ import { WebSocket } from "ws";
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as syncProtocol from 'y-protocols/sync';
 import * as Y from 'yjs';
-import { YjsServer } from "../src/YjsServer";
+import { YjsServer } from "../src/yjs/yjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,7 +40,7 @@ describe("YjsServer", () => {
     afterEach(() => {
         server.close();
         // Clean up test documents
-        const storageDir = path.join(__dirname, "../data");
+        const storageDir = path.join(__dirname, "../src/yjs/data");
         if (fs.existsSync(storageDir)) {
             const files = fs.readdirSync(storageDir);
             files.forEach(file => {
@@ -82,7 +82,7 @@ describe("YjsServer", () => {
         await new Promise(resolve => setTimeout(resolve, 100));
 
         // Check if file exists
-        const docPath = path.join(__dirname, "../src/data/test-doc.bin");
+        const docPath = path.join(__dirname, "../src/yjs/data/test-doc.bin");
         expect(fs.existsSync(docPath)).toBe(true);
     });
 

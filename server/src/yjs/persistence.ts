@@ -24,7 +24,6 @@ export class DocumentPersistence {
             if (fs.existsSync(storagePath)) {
                 const persistedYDoc = fs.readFileSync(storagePath);
                 Y.applyUpdate(doc, persistedYDoc);
-                console.log(`Loaded document '${docName}' from disk`);
             }
         } catch (err) {
             console.error(`Error loading document '${docName}':`, err);
@@ -32,7 +31,6 @@ export class DocumentPersistence {
     }
 
     public persistDocument(docName: string, doc: Y.Doc): void {
-        console.log(`Persisting document '${docName}'`);
         this.persistDocumentState(docName, doc);
         this.saveDocumentText(docName, doc);
     }
@@ -43,7 +41,6 @@ export class DocumentPersistence {
 
         fs.writeFile(storagePath, persistedYDoc, err => {
             if (err) console.error(`Error saving document '${docName}':`, err);
-            else console.log(`Document '${docName}' saved to disk`);
         });
     }
 
@@ -60,7 +57,6 @@ export class DocumentPersistence {
 
         fs.writeFile(storagePath, content, 'utf8', err => {
             if (err) console.error(`Error saving text content for '${docName}':`, err);
-            else console.log(`Text content for '${docName}' saved to disk`);
         });
     }
 
