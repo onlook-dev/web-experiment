@@ -10,6 +10,8 @@ import * as Y from 'yjs';
 import { DocumentPersistence } from './DocumentPersistence';
 import type { ClientConnection, DocumentData } from './types';
 
+const SAVE_DIR = 'data';
+
 // Get directory path in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,7 +37,7 @@ export class YjsServer {
     constructor() {
         this.docs = new Map<string, DocumentData>();
         this.connections = new Map<WebSocket, ClientConnection>();
-        this.persistence = new DocumentPersistence(path.join(__dirname, 'yjs-docs'));
+        this.persistence = new DocumentPersistence(path.join(__dirname, SAVE_DIR));
         this.gcEnabled = process.env['GC'] !== 'false' && process.env['GC'] !== '0';
 
         // Set up periodic saving

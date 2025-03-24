@@ -40,7 +40,7 @@ describe("YjsServer", () => {
     afterEach(() => {
         server.close();
         // Clean up test documents
-        const storageDir = path.join(__dirname, "../yjs-docs");
+        const storageDir = path.join(__dirname, "../data");
         if (fs.existsSync(storageDir)) {
             const files = fs.readdirSync(storageDir);
             files.forEach(file => {
@@ -82,7 +82,7 @@ describe("YjsServer", () => {
         await new Promise(resolve => setTimeout(resolve, 100));
 
         // Check if file exists
-        const docPath = path.join(__dirname, "../yjs-docs/test-doc.bin");
+        const docPath = path.join(__dirname, "../src/data/test-doc.bin");
         expect(fs.existsSync(docPath)).toBe(true);
     });
 

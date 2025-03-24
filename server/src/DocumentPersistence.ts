@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import * as Y from 'yjs';
 
+const YJS_DOC_NAME = 'codemirror';
+
 export class DocumentPersistence {
     private storageDir: string;
 
@@ -52,7 +54,7 @@ export class DocumentPersistence {
     }
 
     public saveDocumentText(docName: string, doc: Y.Doc): void {
-        const text = doc.getText('codemirror');
+        const text = doc.getText(YJS_DOC_NAME);
         const content = text.toString();
         const storagePath = path.join(this.storageDir, `${docName}.txt`);
 
