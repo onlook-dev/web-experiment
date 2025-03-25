@@ -15,5 +15,8 @@
     },
     "peerDependencies": {
         "typescript": "^5"
+    },
+    "dependencies": {
+        "penpal": "^7.0.0"
     }
 }

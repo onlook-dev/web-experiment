@@ -7,6 +7,7 @@
         "@codemirror/lang-javascript": "^6.2.3",
         "@uiw/react-codemirror": "^4.23.10",
         "next": "15.2.3",
+        "penpal": "^7.0.0",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
         "y-codemirror.next": "^0.3.5",
@@ -688,6 +689,8 @@
     "path-key": ["path-key@3.1.1", "", {}, "sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q=="],
 
     "path-parse": ["path-parse@1.0.7", "", {}, "sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw=="],
+
+    "penpal": ["penpal@7.0.0", "", {}, "sha512-lmpZ5u12LjplWirQ7z4ZAyXMNgF3yY73PGS7dv3yLrYa6ZYZNXMpmU6iFX6NcEkLURDNzttootNZlPaPWo3nRQ=="],
 
     "picocolors": ["picocolors@1.1.1", "", {}, "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA=="],
 

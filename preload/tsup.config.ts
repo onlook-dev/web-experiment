@@ -7,5 +7,7 @@ export default defineConfig({
     clean: true,
     dts: false,
     minify: true,
-    outDir: 'dist'
+    outDir: 'dist',
+    noExternal: [/(.*)/],
+    splitting: false,
 });
