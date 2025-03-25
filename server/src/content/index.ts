@@ -1,10 +1,12 @@
 import { createServer } from 'http';
 import httpProxy from 'http-proxy';
 
+const projectUrl = 'http://localhost:3000';
+
 export const runContentServer = () => {
     // Create a proxy server instance
     const proxy = httpProxy.createProxyServer({
-        target: 'http://localhost:3000',
+        target: projectUrl,
         changeOrigin: true,
     });
 
@@ -19,7 +21,7 @@ export const runContentServer = () => {
         res.writeHead(500, {
             'Content-Type': 'text/plain'
         });
-        res.end('Proxy error');
+        res.end('Project not found at ' + projectUrl + req.url);
     });
 
     // Start the server

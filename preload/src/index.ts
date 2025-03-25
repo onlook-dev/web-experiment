@@ -1,13 +1,5 @@
 import { WindowMessenger, connect } from 'penpal';
 
-const getElementAtPoint = (x: number, y: number) => {
-    const element = document.elementFromPoint(x, y);
-    const oid = element?.getAttribute('data-oid');
-    return {
-        oid
-    }
-}
-
 const createMessageConnection = async () => {
     console.log("Iframe creating message connection");
 
@@ -20,12 +12,15 @@ const createMessageConnection = async () => {
         messenger,
         // Methods the iframe window is exposing to the parent window.
         methods: {
-            getElementAtPoint,
-            updateElementStyle(oid: string, style: string) {
-                const element = document.querySelector(`[data-oid="${oid}"]`);
-                if (element) {
-                    (element as HTMLElement).style.cssText = style;
-                }
+            mouseMove(x: number, y: number) {
+                const element = document.elementFromPoint(x, y);
+                if (!element) return;
+                // Remove border for all elements
+                document.querySelectorAll('*').forEach(el => {
+                    (el as HTMLElement).style.cssText = '';
+                });
+                // Add red border to the element
+                (element as HTMLElement).style.cssText = 'background-color: red;';
             }
         },
     });

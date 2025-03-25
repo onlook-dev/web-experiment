@@ -19,10 +19,32 @@ export class DocumentPersistence {
     }
 
     public loadDocument(docName: string, doc: Y.Doc): void {
-        const storagePath = path.join(this.storageDir, `${docName}.bin`);
+        const binPath = path.join(this.storageDir, `${docName}.bin`);
+        const txtPath = path.join(this.storageDir, `${docName}.txt`);
+
         try {
-            if (fs.existsSync(storagePath)) {
-                const persistedYDoc = fs.readFileSync(storagePath);
+            // Check if both files exist
+            if (fs.existsSync(txtPath) && fs.existsSync(binPath)) {
+                const txtStats = fs.statSync(txtPath);
+                const binStats = fs.statSync(binPath);
+
+                // If text file is newer, use its content
+                if (txtStats.mtime > binStats.mtime) {
+                    const textContent = fs.readFileSync(txtPath, 'utf8');
+                    doc.getText(YJS_DOC_NAME).delete(0, doc.getText(YJS_DOC_NAME).length);
+                    doc.getText(YJS_DOC_NAME).insert(0, textContent);
+                } else {
+                    // Load binary state as before
+                    const persistedYDoc = fs.readFileSync(binPath);
+                    Y.applyUpdate(doc, persistedYDoc);
+                }
+            } else if (fs.existsSync(txtPath)) {
+                // Only text file exists
+                const textContent = fs.readFileSync(txtPath, 'utf8');
+                doc.getText(YJS_DOC_NAME).insert(0, textContent);
+            } else if (fs.existsSync(binPath)) {
+                // Only binary file exists
+                const persistedYDoc = fs.readFileSync(binPath);
                 Y.applyUpdate(doc, persistedYDoc);
             }
         } catch (err) {

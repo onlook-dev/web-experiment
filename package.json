@@ -1,0 +1,21 @@
+{
+    "name": "web",
+    "module": "index.ts",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "dev": "bun --filter '*' dev"
+    },
+    "workspaces": [
+        "server",
+        "preload",
+        "client",
+        "test-project"
+    ],
+    "devDependencies": {
+        "@types/bun": "latest"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    }
+}
