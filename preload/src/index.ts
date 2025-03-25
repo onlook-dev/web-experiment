@@ -1,5 +1,13 @@
 import { WindowMessenger, connect } from 'penpal';
 
+const getElementAtPoint = (x: number, y: number) => {
+    const element = document.elementFromPoint(x, y);
+    const oid = element?.getAttribute('data-oid');
+    return {
+        oid
+    }
+}
+
 const createMessageConnection = async () => {
     console.log("Iframe creating message connection");
 
@@ -12,21 +20,17 @@ const createMessageConnection = async () => {
         messenger,
         // Methods the iframe window is exposing to the parent window.
         methods: {
-            multiply(num1: number, num2: number) {
-                return num1 * num2;
-            },
-            divide(num1: number, num2: number) {
-                // Return a promise if asynchronous processing is needed.
-                return num1 / num2;
-            },
+            getElementAtPoint,
+            updateElementStyle(oid: string, style: string) {
+                const element = document.querySelector(`[data-oid="${oid}"]`);
+                if (element) {
+                    (element as HTMLElement).style.cssText = style;
+                }
+            }
         },
     });
 
     const remote = await connection.promise as any;
-    console.log("remote", remote);
-    // Calling a remote method will always return a promise.
-    const additionResult = await remote.add(2, 6);
-    console.log(additionResult); // 8
 }
 
 createMessageConnection();
