@@ -19,6 +19,7 @@ export const GestureScreen = ({ remote, provider }: { remote?: any, provider: We
     useEffect(() => {
         const observer = (event: Y.YMapEvent<any>) => {
             const positions = mouseMap.toJSON();
+            const connectedClients = new Set(Array.from(provider.awareness.getStates().keys()));
 
             setOtherMousePositions(prev => {
                 const newMap = new Map();
@@ -26,12 +27,18 @@ export const GestureScreen = ({ remote, provider }: { remote?: any, provider: We
                     // Skip our own cursor
                     if (Number(clientId) === provider.awareness.clientID) return;
 
+                    // Only show cursors for connected clients
+                    if (!connectedClients.has(Number(clientId))) return;
+
                     const userState = provider.awareness.getStates().get(Number(clientId));
                     newMap.set(Number(clientId), {
                         ...position,
                         clientId: Number(clientId),
                         user: userState?.user
                     });
+                    if (remote) {
+                        remote.mouseMove(position.x, position.y, userState?.user?.color || '#666');
+                    }
                 });
                 return newMap;
             });
@@ -48,7 +55,7 @@ export const GestureScreen = ({ remote, provider }: { remote?: any, provider: We
 
     const handleMouseMove = async (e: React.MouseEvent<HTMLDivElement>) => {
         if (!remote) return;
-        await remote.mouseMove(e.clientX, e.clientY);
+        await remote.mouseMove(e.clientX, e.clientY, provider.awareness.getStates().get(provider.awareness.clientID)?.user?.color || '#666');
 
         // Store position with our client ID as the key
         mouseMap.set(String(provider.awareness.clientID), {

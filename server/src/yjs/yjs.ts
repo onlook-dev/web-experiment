@@ -206,7 +206,6 @@ export class YjsServer {
 
             if (docData.clients.size === 0) {
                 this.persistence.persistDocumentState(docName, docData.doc);
-                this.docs.delete(docName);
             }
         }
 

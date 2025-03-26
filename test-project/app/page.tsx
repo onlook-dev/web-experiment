@@ -14,7 +14,7 @@ export default function Page() {
                 <h1
                     className="text-4xl md:text-5xl font-semibold mb-4 tracking-tight"
                 >
-                    Worry
+                    Hi
                 </h1>
             </div>
         </div>

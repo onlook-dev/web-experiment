@@ -16,7 +16,7 @@ export const Main = () => {
         // // Create doc that will sync with server's doc
         const doc = new Y.Doc();
         const websocketProvider = new WebsocketProvider(
-            'ws://localhost:1234/?document=doc',
+            'ws://localhost:1234/',
             'room',
             doc,
         );

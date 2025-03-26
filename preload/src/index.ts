@@ -12,15 +12,11 @@ const createMessageConnection = async () => {
         messenger,
         // Methods the iframe window is exposing to the parent window.
         methods: {
-            mouseMove(x: number, y: number) {
+            mouseMove(x: number, y: number, color: string) {
+                console.log('mouseMove', x, y, color);
                 const element = document.elementFromPoint(x, y);
                 if (!element) return;
-                // Remove border for all elements
-                document.querySelectorAll('*').forEach(el => {
-                    (el as HTMLElement).style.cssText = '';
-                });
-                // Add red border to the element
-                (element as HTMLElement).style.cssText = 'border: 2px solid red;';
+                (element as HTMLElement).style.cssText = `border: 2px solid ${color};`;
             }
         },
     });

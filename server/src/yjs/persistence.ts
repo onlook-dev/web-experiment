@@ -30,13 +30,13 @@ export class DocumentPersistence {
         const persistedYDoc = Y.encodeStateAsUpdate(doc);
         const storagePath = path.join(this.storageDir, `${docName}.bin`);
 
-        // Test only
-        this.saveDocumentText(docName, doc);
-        // End test
-
         fs.writeFile(storagePath, persistedYDoc, err => {
             if (err) console.error(`Error saving document '${docName}':`, err);
         });
+
+        // Test only
+        this.saveDocumentText(docName, doc);
+        // End test
     }
 
     public persistDocuments(docs: Map<string, { doc: Y.Doc }>): void {
