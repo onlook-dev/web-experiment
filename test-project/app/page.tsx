@@ -11,14 +11,20 @@ export default function Page() {
                     className="text-4xl md:text-5xl font-semibold mb-4 tracking-tight"
                     data-oid="5e6m:a1"
                 >
-                  bye
+                  don't 
                 </h1>
                 <p
                     className="text-xl md:text-2xl text-gray-800 dark:text-gray-300"
                     data-oid="a2h:3nc"
                 >
-                    This is a blank template – Feel free to edit it! 
+                  worry
                 </p>
+              <p
+                    className="text-xl md:text-2xl text-gray-800 dark:text-gray-300"
+                    data-oid="a2h:3nc"
+                >
+Be happy
+              </p>
             </div>
         </div>
     );

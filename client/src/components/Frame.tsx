@@ -11,13 +11,13 @@ export const Frame = (props: any) => {
     const [remote, setRemote] = useState<any>(null);
 
     const handleIframeLoad = async () => {
-        console.log("Parent loading iframe");
+        console.log("Parent loading messages");
         const iframe = iframeRef.current;
         if (!iframe?.contentWindow) return;
 
         const messenger = new WindowMessenger({
             remoteWindow: iframe.contentWindow,
-            allowedOrigins: ['http://localhost:1235'],
+            allowedOrigins: ['http://localhost:3000'],
         });
         const connection = connect({
             messenger,
@@ -26,6 +26,7 @@ export const Frame = (props: any) => {
         });
         const remote = await connection.promise as any;
         setRemote(remote);
+        console.log("Parent loaded messages");
     }
 
     return (

@@ -2,7 +2,7 @@ import { serve } from "bun";
 import path from "path";
 
 const server = serve({
-    port: 1236,
+    port: 1235,
     async fetch(req) {
         const url = new URL(req.url);
         if (url.pathname === "/") {

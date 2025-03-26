@@ -15,7 +15,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <html lang="en" data-oid="si2j4vl">
             <head>
                 {/* Preload the iframe */}
-                <Script src={`http://localhost:1236`} />
+                <Script src={`http://localhost:1235`} />
             </head>
             <body className={inter.className} data-oid="mwz9mme">
                 {children}
