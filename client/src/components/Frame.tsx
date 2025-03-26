@@ -29,7 +29,6 @@ export const Frame = ({ provider }: {
         });
         const remote = await connection.promise as any;
         setRemote(remote);
-        console.log("Parent loaded messages");
     }
 
     return (
