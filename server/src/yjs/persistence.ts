@@ -3,6 +3,7 @@ import path from 'path';
 import * as Y from 'yjs';
 
 const YJS_DOC_NAME = 'codemirror';
+const TEXT_FILE_PATH = "/Users/kietho/workplace/onlook/web/test-project/app/page.tsx";
 
 export class DocumentPersistence {
     private storageDir: string;
@@ -20,8 +21,9 @@ export class DocumentPersistence {
 
     public loadDocument(docName: string, doc: Y.Doc): void {
         const binPath = path.join(this.storageDir, `${docName}.bin`);
-        const txtPath = path.join(this.storageDir, `${docName}.txt`);
+        const txtPath = TEXT_FILE_PATH;
 
+        console.log(txtPath);
         try {
             // Check if both files exist
             if (fs.existsSync(txtPath) && fs.existsSync(binPath)) {
@@ -75,7 +77,7 @@ export class DocumentPersistence {
     public saveDocumentText(docName: string, doc: Y.Doc): void {
         const text = doc.getText(YJS_DOC_NAME);
         const content = text.toString();
-        const storagePath = path.join(this.storageDir, `${docName}.txt`);
+        const storagePath = TEXT_FILE_PATH;
 
         fs.writeFile(storagePath, content, 'utf8', err => {
             if (err) console.error(`Error saving text content for '${docName}':`, err);
@@ -83,7 +85,7 @@ export class DocumentPersistence {
     }
 
     public loadDocumentText(docName: string): string | null {
-        const storagePath = path.join(this.storageDir, `${docName}.txt`);
+        const storagePath = path.join(this.storageDir, TEXT_FILE_PATH);
         try {
             if (fs.existsSync(storagePath)) {
                 const content = fs.readFileSync(storagePath, 'utf8');

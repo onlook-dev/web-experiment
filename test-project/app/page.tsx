@@ -1,7 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-
 export default function Page() {
     return (
         <div
@@ -13,13 +11,13 @@ export default function Page() {
                     className="text-4xl md:text-5xl font-semibold mb-4 tracking-tight"
                     data-oid="5e6m:a1"
                 >
-                    Welcome to your new Onlook website
+                  bye
                 </h1>
                 <p
                     className="text-xl md:text-2xl text-gray-800 dark:text-gray-300"
                     data-oid="a2h:3nc"
                 >
-                    This is a blank template – Feel free to edit it!
+                    This is a blank template – Feel free to edit it! 
                 </p>
             </div>
         </div>

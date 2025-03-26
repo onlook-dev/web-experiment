@@ -4,7 +4,7 @@
     "type": "module",
     "private": true,
     "scripts": {
-        "dev": "bun --filter '*' dev"
+        "dev": "bun --elide-lines 0 --filter '*' dev"
     },
     "workspaces": [
         "server",

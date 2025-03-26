@@ -32,7 +32,7 @@ export const Frame = (props: any) => {
         <div className="w-96 h-96 m-auto relative">
             <iframe
                 ref={iframeRef}
-                src="http://localhost:1235"
+                src="http://localhost:3000"
                 sandbox="allow-modals allow-forms allow-same-origin allow-scripts allow-popups allow-downloads allow-presentation"
                 allow="geolocation; microphone; camera; midi; encrypted-media"
                 className="w-full h-full"
