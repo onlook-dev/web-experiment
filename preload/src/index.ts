@@ -13,7 +13,6 @@ const createMessageConnection = async () => {
         // Methods the iframe window is exposing to the parent window.
         methods: {
             mouseMove(x: number, y: number, color: string) {
-                console.log('mouseMove', x, y, color);
                 const element = document.elementFromPoint(x, y);
                 if (!element) return;
                 (element as HTMLElement).style.cssText = `border: 2px solid ${color};`;

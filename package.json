@@ -4,7 +4,7 @@
     "type": "module",
     "private": true,
     "scripts": {
-        "dev:local": "bun run --elide-lines 0 --filter '*' dev",
+        "dev": "bun run --elide-lines 0 --filter '*' dev",
         "docker:up": "docker compose up",
         "docker:build": "docker compose build",
         "docker:down": "docker compose down",
@@ -14,8 +14,7 @@
         "server",
         "preload",
         "client",
-        "test-project",
-        "shared"
+        "test-project"
     ],
     "devDependencies": {
         "@types/bun": "latest"
