@@ -20,7 +20,7 @@ const createMessageConnection = async () => {
                     (el as HTMLElement).style.cssText = '';
                 });
                 // Add red border to the element
-                (element as HTMLElement).style.cssText = 'background-color: red;';
+                (element as HTMLElement).style.cssText = 'border: 2px solid red;';
             }
         },
     });

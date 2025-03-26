@@ -11,7 +11,7 @@ export default function Page() {
                     className="text-4xl md:text-5xl font-semibold mb-4 tracking-tight"
                     data-oid="5e6m:a1"
                 >
-                  don't 
+                  Don't 
                 </h1>
                 <p
                     className="text-xl md:text-2xl text-gray-800 dark:text-gray-300"

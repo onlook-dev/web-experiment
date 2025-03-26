@@ -1,5 +1,5 @@
 {
-    "name": "preload",
+    "name": "@onlook/preload",
     "module": "src/index.ts",
     "type": "module",
     "scripts": {

@@ -1,5 +1,5 @@
 {
-    "name": "server",
+    "name": "@onlook/server",
     "module": "src/index.ts",
     "type": "module",
     "scripts": {

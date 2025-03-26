@@ -1,5 +1,5 @@
 {
-    "name": "web",
+    "name": "@onlook/web",
     "module": "index.ts",
     "type": "module",
     "private": true,
@@ -10,7 +10,8 @@
         "server",
         "preload",
         "client",
-        "test-project"
+        "test-project",
+        "shared"
     ],
     "devDependencies": {
         "@types/bun": "latest"
