@@ -4,9 +4,12 @@ import { useState } from "react";
 
 import { WindowMessenger, connect } from 'penpal';
 import { useRef } from "react";
+import { WebsocketProvider } from "y-websocket";
 import { GestureScreen } from './GestureScreen';
 
-export const Frame = (props: any) => {
+export const Frame = ({ provider }: {
+    provider: WebsocketProvider
+}) => {
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const [remote, setRemote] = useState<any>(null);
 
@@ -34,13 +37,12 @@ export const Frame = (props: any) => {
             <iframe
                 ref={iframeRef}
                 src="http://localhost:3000"
-                sandbox="allow-modals allow-forms allow-same-origin allow-scripts allow-popups allow-downloads allow-presentation"
+                sandbox="allow-modals allow-forms allow-same-origin allow-scripts allow-popups allow-downloads"
                 allow="geolocation; microphone; camera; midi; encrypted-media"
                 className="w-full h-full"
-                {...props}
                 onLoad={handleIframeLoad}
             />
-            <GestureScreen remote={remote} />
+            <GestureScreen remote={remote} provider={provider} />
         </div>
     );
 };

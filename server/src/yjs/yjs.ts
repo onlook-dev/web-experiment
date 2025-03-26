@@ -94,6 +94,7 @@ export class YjsServer {
 
         const url = new URL(req.url || '/', `http://${req.headers.host}`);
         const docName = url.searchParams.get('document') || 'default';
+        console.log("docName", docName);
         const clientId = Math.random().toString(36).substring(2, 15);
 
         // Store connection info
@@ -204,9 +205,8 @@ export class YjsServer {
             docData.clients.delete(clientId);
 
             if (docData.clients.size === 0) {
-                this.persistence.persistDocument(docName, docData.doc);
-                // Optional: Unload from memory
-                // this.docs.delete(docName);
+                this.persistence.persistDocumentState(docName, docData.doc);
+                this.docs.delete(docName);
             }
         }
 
