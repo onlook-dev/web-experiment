@@ -4,7 +4,11 @@
     "type": "module",
     "private": true,
     "scripts": {
-        "dev": "bun --elide-lines 0 --filter '*' dev"
+        "dev:local": "bun run --elide-lines 0 --filter '*' dev",
+        "docker:up": "docker compose up",
+        "docker:build": "docker compose build",
+        "docker:down": "docker compose down",
+        "docker:restart": "docker compose down && docker compose up"
     },
     "workspaces": [
         "server",
@@ -17,6 +21,7 @@
         "@types/bun": "latest"
     },
     "peerDependencies": {
-        "typescript": "^5"
+        "typescript": "^5",
+        "concurrently": "^9.1.2"
     }
 }

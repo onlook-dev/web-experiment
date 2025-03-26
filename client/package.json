@@ -17,8 +17,7 @@
         "react-dom": "^19.0.0",
         "y-codemirror.next": "^0.3.5",
         "y-websocket": "^2.1.0",
-        "yjs": "^13.6.24",
-        "@onlook": "workspace:*"
+        "yjs": "^13.6.24"
     },
     "devDependencies": {
         "typescript": "^5",

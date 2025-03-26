@@ -1,0 +1,57 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "1234:1234"
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+      - test-project-volume:/test-project
+    environment:
+      - NODE_ENV=development
+    command: bun run dev
+
+  test-project:
+    build:
+      context: ./test-project
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./test-project:/app
+      - /app/node_modules
+      - test-project-volume:/app
+    environment:
+      - NODE_ENV=development
+    command: bun run dev
+
+  preload:
+    build:
+      context: ./preload
+      dockerfile: Dockerfile
+    ports:
+      - "1235:1235"
+    volumes:
+      - ./preload:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: bun run server/index.ts
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: bun run dev
+
+volumes:
+  test-project-volume: 
