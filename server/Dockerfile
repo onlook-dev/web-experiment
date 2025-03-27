@@ -7,6 +7,6 @@ RUN bun install
 
 COPY . .
 
-EXPOSE 1234
+EXPOSE 8081
 
 CMD ["bun", "run", "dev"] 

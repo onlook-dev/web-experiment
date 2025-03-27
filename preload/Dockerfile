@@ -13,8 +13,8 @@ RUN bun install
 # Copy the rest of the application
 COPY . .
 
-# Expose port 1235
-EXPOSE 1235
+# Expose port 8082
+EXPOSE 8082
 
 # Start the server
 CMD ["bun", "server/index.ts"] 

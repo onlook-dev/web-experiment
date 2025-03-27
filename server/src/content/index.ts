@@ -25,7 +25,7 @@ export const runContentServer = () => {
     });
 
     // Start the server
-    server.listen(1235, () => {
-        console.log(`Proxy server running on port 1235...`);
+    server.listen(8082, () => {
+        console.log(`Proxy server running on port 8082...`);
     });
 };

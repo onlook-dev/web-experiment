@@ -30,9 +30,9 @@ describe("YjsServer", () => {
         } as any;
 
         mockReq = {
-            url: "ws://localhost:1234?document=test-doc",
+            url: "ws://localhost:8081?document=test-doc",
             headers: {
-                host: "localhost:1234"
+                host: "localhost:8081"
             }
         };
     });

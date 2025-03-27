@@ -14,7 +14,17 @@ export default function Page() {
                 <h1
                     className="text-4xl md:text-5xl font-semibold mb-4 tracking-tight"
                 >
-                    Hi
+                    Worry
+                </h1>
+               <h1
+                    className="text-4xl md:text-5xl font-semibold mb-4 tracking-tight"
+                >
+                    Be
+                </h1>
+               <h1
+                    className="text-4xl md:text-5xl font-semibold mb-4 tracking-tight"
+                >
+                    Happy
                 </h1>
             </div>
         </div>
